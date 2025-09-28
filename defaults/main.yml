@@ -1,0 +1,24 @@
+# The default location to where act will be installed. This should be a directory.
+hth_default_act_installation_path: "/opt/act"
+
+# The default location to where a symlink should be added to add the default
+# version to the path. This should be a directory.
+hth_default_act_path_symlink_path: "/usr/bin"
+
+# The owner of the default version symlink
+hth_default_act_path_symlink_owner: "root"
+
+# the group owner of the default version symlink
+hth_default_act_path_symlink_group: "root"
+
+# The default owner for the act installation path and executable
+hth_default_act_installation_owner: "root"
+
+# The default group for the act installation path and executable
+hth_default_act_installation_group: "root"
+
+# The default supported architectures for linux
+hth_default_act_os_linux_architectures: ["x86_64", "riscv64", "i386", "armv6", "armv7", "arm64"]
+
+# The default supported architectures for darwin
+hth_default_act_os_darwin_architectures: ["x86_64", "arm64"]

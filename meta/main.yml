@@ -1,0 +1,18 @@
+galaxy_info:
+  author: Hrafn Thorvaldsson
+  description: A role for managing local Github workflow runner 'act' (https://github.com/nektos/act)
+  company: hth
+
+  license: Apache2
+
+  min_ansible_version: 2.1
+
+  platforms:
+    - name: Ubuntu
+
+  galaxy_tags:
+    - act
+    - github
+    - ci
+
+dependencies: []

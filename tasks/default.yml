@@ -1,0 +1,37 @@
+- name: "HTH | Act | Set default version executable path"
+  ansible.builtin.set_fact:
+    act_default_version_executable_path: "{{ hth_default_act_installation_path }}/{{ act.default }}/act"
+  when:
+    - act.remove is undefined or not act.remove
+
+- name: "HTH | Act | Stat default version executable"
+  ansible.builtin.stat:
+    path:  "{{ act_default_version_executable_path }}"
+  register: act_default_version_executable
+  when:
+    - act.remove is undefined or not act.remove
+
+- name: "HTH | Act | Fail on version executable not existing"
+  ansible.builtin.fail:
+    msg: "Executable for version {{ act.default }} was not found!"
+  when:
+    - act.remove is undefined or not act.remove
+    - not act_default_version_executable.stat.exists
+
+- name: "HTH | Act | Set default version as global version"
+  ansible.builtin.file:
+    src: "{{ act_default_version_executable_path }}"
+    dest: "{{ hth_default_act_path_symlink_path }}/act"
+    owner: "{{ hth_default_act_path_symlink_owner }}"
+    group: "{{ hth_default_act_path_symlink_group }}"
+    mode: 0755
+    state: link
+  when:
+    - act.remove is undefined or not act.remove
+
+- name: "HTH | Act | Remove global version link"
+  ansible.builtin.file:
+    path: "{{ hth_default_act_path_symlink_path }}/act"
+    state: absent
+  when:
+    - act.remove is defined and act.remove

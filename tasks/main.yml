@@ -1,0 +1,54 @@
+- name: "HTH | Act | Assert input variables"
+  ansible.utils.validate:
+    data: "{{ act }}"
+    criteria: "{{ lookup('file', 'criteria/act.json') | from_json }}"
+    engine: ansible.utils.jsonschema
+  run_once: yes
+  delegate_to: localhost
+
+- name: "HTH | Act | Validate OS and architecture compatibility"
+  ansible.builtin.fail:
+    msg: "Invalid architecture value for os '{{ act.os }}'. Must be one of: {{ hth_default_act_os_linux_architectures if (act.os == 'linux') else hth_default_act_os_darwin_architectures }}"
+  when:
+    - act.remove is undefined or not act.remove
+    - act.os is defined
+    - act.architecture is defined
+    - (act.os == 'linux' and act.architecture not in hth_default_act_os_linux_architectures) or (act.os == 'darwin' and act.architecture not in hth_default_act_os_darwin_architectures)
+
+- name: "HTH | Act | Set operating system fact"
+  ansible.builtin.set_fact:
+    hth_act_os: "{{ act.os if(act.os is defined) else 'linux' }}"
+  when:
+    - act.remove is undefined or not act.remove
+
+- name: "HTH | Act | Set architecture fact"
+  ansible.builtin.set_fact:
+    hth_act_os: "{{ act.architecture if(act.architecture is defined) else 'x86_64' }}"
+  when:
+    - act.remove is undefined or not act.remove
+
+- name: "HTH | Act | Trim unlisted versions"
+  ansible.builtin.include_tasks: trim.yml
+  when:
+    - act.remove is undefined or not act.remove
+    - act.trim is defined and act.trim
+
+- name: "HTH | Act | Download versions"
+  ansible.builtin.include_tasks: download.yml
+  loop: "{{ act.versions }}"
+  loop_control:
+    loop_var: version
+  when:
+    - act.remove is undefined or not act.remove
+    - act.versions is defined
+    - act.versions | length > 0
+
+- name: "HTH | Act | Set default version"
+  ansible.builtin.include_tasks: default.yml
+
+- name: "HTH | Act | Remove all versions"
+  ansible.builtin.file:
+    path: "{{ hth_default_act_installation_path }}"
+    state: absent
+  when:
+    - act.remove is defined and act.remove
