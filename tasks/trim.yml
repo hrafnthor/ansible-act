@@ -1,0 +1,19 @@
+- name: "HTH | Act | Extract listed version values"
+  ansible.builtin.set_fact:
+    versions: "{{ act.versions | map(attribute='version') | list }}"
+
+# Retrieves a list of all directories in the installation directory that do not
+# correspond to version numbers defined in task input, nor default directory.
+- name: "HTH | Act | Find undefined versions"
+  ansible.builtin.find:
+    paths: "{{ hth_default_act_installation_path }}"
+    file_type: directory
+    excludes: "{{ versions + ['default'] }}"
+  register: act_path_directories
+
+# Removes all directories from previously generated list that are not links
+- name: "HTH | Act | Remove undefined version"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ act_path_directories.files | selectattr('islnk', 'defined') | selectattr('islnk', 'equalto', False)  | map(attribute='path') | list }}"

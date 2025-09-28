@@ -1,0 +1,65 @@
+- name: "HTH | Act | Set version install location"
+  ansible.builtin.set_fact:
+    act_version_path: "{{ hth_default_act_installation_path }}/{{ version.version }}"
+
+- name: " HTH | Act | Lookup version executable"
+  ansible.builtin.stat:
+    path:  "{{ act_version_path }}/act"
+  register: act_version_executable
+
+- name: "HTH | Act | Set archive name"
+  ansible.builtin.set_fact:
+    act_archive_name: "act-{{ version.version }}.tar.gz"
+  when:
+    - not act_version_executable.stat.exists
+
+- name: "HTH | Act | Set archive download path"
+  ansible.builtin.set_fact:
+    act_archive_download_path: "/tmp/{{ act_archive_name }}"
+  when:
+    - not act_version_executable.stat.exists
+
+- block:
+  - name: "HTH | Act | Download version archive"
+    ansible.builtin.get_url:
+      url: "https://github.com/nektos/act/releases/download/v{{ version.version }}/act_{{ act.os }}_x86_64.tar.gz"
+      dest: "{{ act_archive_download_path }}"
+      checksum: "{{ version.checksum }}"
+    register: archive_download_state
+    when:
+      - not act_version_executable.stat.exists
+
+  - name: "HTH | Act | Ensure installation path"
+    ansible.builtin.file:
+      path: "{{ act_version_path }}"
+      owner: "{{ hth_default_act_installation_owner }}"
+      group: "{{ hth_default_act_installation_group }}"
+      modification_time: preserve
+      access_time: preserve
+      state: directory
+      mode: 0755
+      recurse: true
+    when:
+      - not act_version_executable.stat.exists
+
+  - name: "HTH | Act | Extract archive"
+    ansible.builtin.unarchive:
+      src: "{{ act_archive_download_path }}"
+      dest: "{{ act_version_path }}/"
+      owner: "{{ hth_default_act_installation_owner }}"
+      group: "{{ hth_default_act_installation_group }}"
+      remote_src: yes
+      mode: 0755
+    register: unarchive_state
+    when:
+      - not act_version_executable.stat.exists
+
+  always:
+
+    - name: "HTH | Act | Cleanup temporary files"
+      ansible.builtin.file:
+        path: "{{ act_archive_download_path }}"
+        state: absent
+      when:
+        - archive_download_state is defined
+        - archive_download_state.changed
